@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Tartu E-Bike 300</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- ===== MÄNGU NÄIDIKUD ===== -->
+<div id="hud">
+  <canvas id="mini" width="240" height="240"></canvas>
+  <div id="loc">Tartu</div>
+  <div id="help"><kbd>W</kbd>/<kbd>↑</kbd> gaas · <kbd>S</kbd>/<kbd>↓</kbd> pidur · <kbd>A</kbd><kbd>D</kbd> rool<br><kbd>T</kbd> teleport · <kbd>R</kbd> Raekoja plats · <kbd>V</kbd> vaade · <kbd>Esc</kbd> TartuOS</div>
+  <canvas id="cam" width="320" height="240"></canvas>
+  <div id="bars">
+    <div><div class="bar bat"><i id="bBat"></i></div><div class="barl">AKU</div></div>
+    <div><div class="bar b"><i id="bBrake"></i></div><div class="barl">PIDUR</div></div>
+    <div><div class="bar g"><i id="bGas"></i></div><div class="barl">GAAS</div></div>
+  </div>
+  <div id="speed"><div class="v" id="spd">0</div><div class="u" id="spdU">km/h</div></div>
+  <div id="steer"><i id="steerI"></i></div>
+  <div id="msg"></div>
+</div>
+
+<!-- ===== TARTU OS TÖÖLAUD ===== -->
+<div id="desktop">
+  <div id="wall"></div>
+  <div id="brand"><div class="b1">TARTU E-BIKE 300</div><div class="b2">TartuOS · Tartu 1:1 · käte AI · 300 km/h</div></div>
+
+  <div id="icons">
+    <button class="app" data-app="drive"><span class="ai g1">🚲</span><span>Sõida</span></button>
+    <button class="app" data-app="driveCam"><span class="ai g2">🖐</span><span>Sõida kaameraga</span></button>
+    <button class="app" data-app="winTeach"><span class="ai g3">🎓</span><span>Õpeta ratast</span></button>
+    <button class="app" data-app="winGun"><span class="ai g6">🔫</span><span>Täpsuslask</span></button>
+    <button class="app" data-app="winSettings"><span class="ai g4">⚙️</span><span>Seaded</span></button>
+    <button class="app" data-app="winHelp"><span class="ai g5">❔</span><span>Abi</span></button>
+  </div>
+
+  <div id="loadbox" class="glass"><div class="lt">Laen Tartut…</div><div class="meter big"><i id="loadbar"></i></div><div id="loadmsg" class="loadmsg"></div></div>
+  <div id="handbox" class="glass"><div class="lt">🖐 Käte AI</div><div class="meter big hb"><i id="handbar"></i></div><div id="handmsg" class="loadmsg"></div></div>
+  <div id="reloadBar" class="glass"><span>Muudatus rakendub pärast taaskäivitust</span><button class="primary" id="reloadNow">↻ Taaskäivita</button></div>
+
+  <!-- Seaded -->
+  <div class="win" id="winSettings" style="width:min(1080px,96vw);height:min(720px,88vh)">
+    <div class="titlebar"><span>⚙️ Seaded</span><div><button class="wmax">▢</button><button class="wclose">✕</button></div></div>
+    <div class="wbody settings"><nav id="setSide"></nav><main id="setMain"></main></div>
+  </div>
+
+  <!-- Õpeta ratast -->
+  <div class="win" id="winTeach" style="width:min(1180px,97vw);height:min(760px,92vh)">
+    <div class="titlebar"><span>🎓 Õpeta ratast</span><div><button class="wmax">▢</button><button class="wclose">✕</button></div></div>
+    <div class="wbody teach">
+      <div class="tleft"><canvas id="teachCv" class="campreview" width="800" height="600"></canvas></div>
+      <div class="tright">
+        <ol id="teachSteps"></ol>
+        <div class="meter"><i id="teachBar"></i></div>
+        <div class="tcard"><h2 id="teachTitle"></h2><p id="teachText"></p></div>
+        <div class="row"><button id="teachBack">◀ Tagasi</button><button class="primary" id="teachNext">Alusta ▶</button><button id="teachRedo">↺ Õpeta uuesti</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Täpsuslask -->
+  <div class="win" id="winGun" style="width:min(1000px,96vw);height:min(640px,88vh)">
+    <div class="titlebar"><span>🔫 Täpsuslask</span><div><button class="wmax">▢</button><button class="wclose">✕</button></div></div>
+    <div class="wbody teach">
+      <div class="tleft"><canvas id="gunCv" class="campreview" width="640" height="480"></canvas></div>
+      <div class="tright">
+        <div class="tcard"><h2>Õpeta AI-le oma püss</h2><p>Võta kätte mängupüss (või tee sõrmedega püss). Klõpsa vasakul pildil püssi peale. Siis vajuta <b>🎓 Õpeta püss</b>: sihi 9 märklauda ja näita, kuidas päästikut tõmbad.</p></div>
+        <div id="gunStatus" class="small"></div>
+        <div class="row"><button class="primary" id="gunTeach">🎓 Õpeta püss</button></div>
+        <div class="row"><button class="primary" id="gunPlay">🎯 Täpsusmäng (45 s)</button></div>
+        <div class="row"><button id="gunOS">🖱 Juhi TartuOS-i püssiga</button></div>
+        <p class="small">Täpsusmängus tulista märklaudu: mida lähemale keskele, seda rohkem punkte. OS-i juhtimisel sihi äpi ikooni või nuppu ja tõmba päästikut = klikk. <kbd>Esc</kbd> lõpetab.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Abi -->
+  <div class="win" id="winHelp" style="width:min(640px,94vw)">
+    <div class="titlebar"><span>❔ Abi</span><div><button class="wclose">✕</button></div></div>
+    <div class="wbody pad">
+      <h3>Kuidas mängida</h3>
+      <p><b>🚲 Sõida</b>: klaviatuur/pult. <kbd>W</kbd> gaas, <kbd>S</kbd> pidur, <kbd>A</kbd><kbd>D</kbd> rool, <kbd>T</kbd> teleport (maanteel saad 300 km/h), <kbd>V</kbd> vaade, <kbd>Esc</kbd> tagasi TartuOS-i.</p>
+      <p><b>🎓 Õpeta ratast</b>: klõpsa kaamerapildil, kus on <b>pidur</b>, <b>gaas</b> ja sinu <b>pea</b>. Siis näita, kuidas vajutad. AI õpib sinu liigutused selgeks ja AR nooled näitavad, mida ta näeb.</p>
+      <p><b>🖐 Sõida kaameraga</b>: pärast õpetamist juhid ratast oma päris ratta hoobade ja pea kallutamisega.</p>
+      <p><b>🔫 Täpsuslask</b>: õpeta AI-le oma püssi sihtimine ja päästik, mängi täpsusmängu või juhi TartuOS-i püssiga.</p>
+      <p><b>Lenks ja vaade</b>: kuhu sa lenksu keerad, sinna ratas sõidab. Kuhu sa vaatad (pea pööre), sinna pöörab mängu kaamera. Klahv <kbd>L</kbd> seab otsevaate.</p>
+      <p><b>⚙️ Seaded</b>: graafika, tundlikkus, liiklus, tippkiirus, heli, minikaart jne.</p>
+    </div>
+  </div>
+
+  <!-- Start-menüü ja tegumiriba -->
+  <div id="startMenu" class="glass">
+    <div class="sm-h">TartuOS</div>
+    <button data-app="drive">🚲 Sõida</button><button data-app="driveCam">🖐 Sõida kaameraga</button><button data-app="winTeach">🎓 Õpeta ratast</button><button data-app="winGun">🔫 Täpsuslask</button><button data-app="winSettings">⚙️ Seaded</button><button data-app="winHelp">❔ Abi</button>
+  </div>
+  <div id="taskbar">
+    <button id="startBtn">🚲</button>
+    <div id="tasks"></div>
+    <div id="tray"><span class="tray-dot" id="trayCam" title="Kaamera">📷</span><span class="tray-dot" id="trayHand" title="Käte AI">🖐</span><div class="clk"><b id="clock">--:--</b><small id="clockDate"></small></div></div>
+  </div>
+</div>
+
+<canvas id="gunLayer"></canvas>
+<div id="toast"></div>
+
+<script src="js/three.min.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/osm.js"></script>
+<script src="js/tartu-map.js"></script>
+<script src="js/world.js"></script>
+<script src="js/traffic.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/hands.js"></script>
+<script src="js/bike.js"></script>
+<script src="js/vision.js"></script>
+<script src="js/teach.js"></script>
+<script src="js/gun.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
